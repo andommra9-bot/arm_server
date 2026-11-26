@@ -6,34 +6,24 @@ jobs:
   android-emulator:
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: Build Android 13 ARM64 with Google Play & Camera
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Start Android 13 ARM64 with Google Play & Camera
         run: |
           sudo modprobe binder_linux devices="binder,hwbinder,vndbinder" || true
-          sudo apt-get update && sudo apt-get install -y unzip adb nodejs npm
-          gh release download -R s1204IT/MindTheGapps-13.0.0-arm64 -p "*.zip" -O gapps.zip
-          mkdir -p gapps_extract
-          unzip -q gapps.zip -d gapps_extract
-          cat << 'EOF' > Dockerfile
-          FROM redroid/redroid:13.0.0-latest
-          COPY gapps_extract/system /system
-          EOF
-          docker build -t redroid-13-gapps .
+          sudo modprobe v4l2loopback || true
           docker run -itd --name android --privileged \
             --net=host \
-            redroid-13-gapps \
+            teddysun/redroid:13.0.0-gapps \
             androidboot.redroid_width=720 \
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320 \
-            androidboot.redroid_gpu_mode=guest \
-            androidboot.hardware.camera=v4l2
+            androidboot.redroid_gpu_mode=guest
           sleep 25
 
       - name: Start Web Screen & Link
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          sudo apt-get update && sudo apt-get install -y adb nodejs npm
           gh repo clone NetrisTV/ws-scrcpy
           cd ws-scrcpy
           npm install
