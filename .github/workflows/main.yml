@@ -15,12 +15,17 @@ jobs:
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320
 
-      - name: Start Web Screen & Public Link
+      - name: Build Native ARM64 Web Screen & Link
         run: |
           sleep 20
-          sudo apt-get update && sudo apt-get install -y adb npm
+          sudo apt-get update && sudo apt-get install -y adb nodejs npm git
           adb connect localhost:5555
-          docker run -d --net=host --platform linux/amd64 scavin/ws-scrcpy
+          git clone https://github.com
+          cd ws-scrcpy
+          npm install
+          npm run dist
+          nohup npm start > /dev/null 2>&1 &
+          sleep 5
           npx -y localtunnel --port 8000 > link.txt 2>&1 &
           sleep 10
           echo "=========================================="
