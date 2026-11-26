@@ -17,10 +17,10 @@ jobs:
 
       - name: Build Native ARM64 Web Screen & Link
         run: |
-          sleep 20
-          sudo apt-get update && sudo apt-get install -y adb nodejs npm git
+          sleep 35
+          sudo apt-get update && sudo apt-get install -y adb nodejs npm
           adb connect localhost:5555
-          git clone https://github.com
+          gh repo clone NetrisTV/ws-scrcpy
           cd ws-scrcpy
           npm install
           npm run dist
