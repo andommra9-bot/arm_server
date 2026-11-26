@@ -6,7 +6,7 @@ jobs:
   android-emulator:
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: Start Redroid (Android 12 ARM64)
+      - name: Start Android 12 ARM64
         run: |
           docker run -itd --rm --privileged \
             -p 5555:5555 \
@@ -15,19 +15,12 @@ jobs:
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320
 
-      - name: Setup Web Screen (ARM64) & ADB
+      - name: Start Web Screen & Tunnel
         run: |
-          sudo apt-get update && sudo apt-get install -y adb nodejs npm git
-          sleep 15
+          sleep 30
+          sudo apt-get update && sudo apt-get install -y adb curl
           adb connect localhost:5555
-          git clone https://github.com
-          cd ws-scrcpy
-          npm install
-          npm run dist
-          nohup npm start > /dev/null 2>&1 &
-
-      - name: Create Public Web Link (Cloudflare)
-        run: |
+          docker run -d --net=host --platform linux/amd64 scavin/ws-scrcpy
           curl -fsSL https://cloudflare.com | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
           echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://cloudflare.com any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
           sudo apt-get update && sudo apt-get install -y cloudflared
