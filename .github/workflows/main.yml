@@ -11,22 +11,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           sudo modprobe binder_linux devices="binder,hwbinder,vndbinder" || true
-          gh repo clone redroid-dev/redroid-doc
-          cd redroid-doc/android-builder-docker
-          cat << 'EOF' > Dockerfile
-          FROM redroid/redroid:13.0.0-latest
-          ADD https://github.com /tmp/gapps.zip
-          RUN apt-get update || true
-          EOF
           sudo apt-get update && sudo apt-get install -y unzip adb nodejs npm
+          gh release download -R s1204IT/MindTheGapps-13.0.0-arm64 -p "*.zip" -O gapps.zip
           mkdir -p gapps_extract
-          curl -L -o gapps.zip https://github.com
           unzip -q gapps.zip -d gapps_extract
-          cat << 'EOF' > Dockerfile.custom
+          cat << 'EOF' > Dockerfile
           FROM redroid/redroid:13.0.0-latest
           COPY gapps_extract/system /system
           EOF
-          docker build -f Dockerfile.custom -t redroid-13-gapps .
+          docker build -t redroid-13-gapps .
           docker run -itd --name android --privileged \
             --net=host \
             redroid-13-gapps \
@@ -41,7 +34,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cd ~
           gh repo clone NetrisTV/ws-scrcpy
           cd ws-scrcpy
           npm install
