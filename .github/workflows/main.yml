@@ -6,14 +6,22 @@ jobs:
   android-emulator:
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: Start Android 13 ARM64 with Google Play & Camera
+      - name: Build & Start Android 13 ARM64 with Google Play
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           sudo modprobe binder_linux devices="binder,hwbinder,vndbinder" || true
-          sudo apt-get update && sudo apt-get install -y v4l2loopback-dkms adb nodejs npm
+          sudo apt-get update && sudo apt-get install -y v4l2loopback-dkms adb nodejs npm lzip unzip
           sudo modprobe v4l2loopback devices=1 video_nr=10 card_label="VirtualCam" exclusive_caps=1 || true
+          gh repo clone remote-android/redroid-doc
+          cd redroid-doc/android-builder-docker
+          sed -i 's/12.0.0/13.0.0/g' Dockerfile || true
+          docker build -t redroid-13-gapps . || true
+          IMAGE_NAME=$(docker images -q redroid-13-gapps)
+          if [ -z "$IMAGE_NAME" ]; then RUN_IMG="redroid/redroid:13.0.0-latest"; else RUN_IMG="redroid-13-gapps"; fi
           docker run -itd --name android --privileged \
             --net=host \
-            abing7/redroid:13.0.0-gapps \
+            $RUN_IMG \
             androidboot.redroid_width=720 \
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320 \
@@ -24,6 +32,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          cd ~
           gh repo clone NetrisTV/ws-scrcpy
           cd ws-scrcpy
           npm install
@@ -38,3 +47,4 @@ jobs:
           cat link.txt
           echo "=========================================="
           sleep 21000
+          
