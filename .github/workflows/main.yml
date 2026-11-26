@@ -15,16 +15,21 @@ jobs:
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320
 
-      - name: Setup Web Screen (ws-scrcpy) & ADB
+      - name: Setup Web Screen (ARM64) & ADB
         run: |
-          sudo apt-get update && sudo apt-get install -y adb
+          sudo apt-get update && sudo apt-get install -y adb nodejs npm git
           sleep 15
           adb connect localhost:5555
-          docker run -d --net=host scavin/ws-scrcpy
+          git clone https://github.com
+          cd ws-scrcpy
+          npm install
+          npm run dist
+          nohup npm start > /dev/null 2>&1 &
 
       - name: Create Public Web Link (Cloudflare)
         run: |
-          curl -L https://github.com -o cloudflared
-          chmod +x cloudflared
-          ./cloudflared tunnel --url http://localhost:8000 &
+          curl -fsSL https://cloudflare.com | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+          echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://cloudflare.com any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+          sudo apt-get update && sudo apt-get install -y cloudflared
+          cloudflared tunnel --url http://localhost:8000 &
           sleep 21000
