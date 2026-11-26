@@ -19,13 +19,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          sleep 30
           sudo apt-get update && sudo apt-get install -y adb nodejs npm
-          adb connect 127.0.0.1:5555
           gh repo clone NetrisTV/ws-scrcpy
           cd ws-scrcpy
           npm install
           npm run dist
+          adb connect 127.0.0.1:5555
           node dist/index.js > server.log 2>&1 &
           sleep 15
           npx -y localtunnel --port 8000 --local-host 127.0.0.1 > link.txt 2>&1 &
