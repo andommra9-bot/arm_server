@@ -1,4 +1,4 @@
-name: Android ARM Rooted
+name: Android 13 ARM GApps Rooted
 on:
   workflow_dispatch:
 
@@ -6,35 +6,53 @@ jobs:
   android-emulator:
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: Enable Kernel Modules & Start Android ARM64
-        run: |
-          sudo modprobe binder_linux devices="binder,hwbinder,vndbinder" || true
-          docker run -itd --name android --privileged \
-            --net=host \
-            redroid/redroid:12.0.0-latest \
-            androidboot.redroid_width=720 \
-            androidboot.redroid_height=1280 \
-            androidboot.redroid_dpi=320
-          sleep 20
-          docker ps -a
-
-      - name: Build Native ARM64 Web Screen & Link
+      - name: Build Android 13 ARM64 with Google Play & Camera
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          sudo apt-get update && sudo apt-get install -y adb nodejs npm
+          sudo modprobe binder_linux devices="binder,hwbinder,vndbinder" || true
+          gh repo clone redroid-dev/redroid-doc
+          cd redroid-doc/android-builder-docker
+          cat << 'EOF' > Dockerfile
+          FROM redroid/redroid:13.0.0-latest
+          ADD https://github.com /tmp/gapps.zip
+          RUN apt-get update || true
+          EOF
+          sudo apt-get update && sudo apt-get install -y unzip adb nodejs npm
+          mkdir -p gapps_extract
+          curl -L -o gapps.zip https://github.com
+          unzip -q gapps.zip -d gapps_extract
+          cat << 'EOF' > Dockerfile.custom
+          FROM redroid/redroid:13.0.0-latest
+          COPY gapps_extract/system /system
+          EOF
+          docker build -f Dockerfile.custom -t redroid-13-gapps .
+          docker run -itd --name android --privileged \
+            --net=host \
+            redroid-13-gapps \
+            androidboot.redroid_width=720 \
+            androidboot.redroid_height=1280 \
+            androidboot.redroid_dpi=320 \
+            androidboot.redroid_gpu_mode=guest \
+            androidboot.hardware.camera=v4l2
+          sleep 25
+
+      - name: Start Web Screen & Link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd ~
           gh repo clone NetrisTV/ws-scrcpy
           cd ws-scrcpy
           npm install
           npm run dist
           adb connect 127.0.0.1:5555
-          adb devices
           node dist/index.js > server.log 2>&1 &
           sleep 15
           npx -y localtunnel --port 8000 --local-host 127.0.0.1 > link.txt 2>&1 &
           sleep 10
           echo "=========================================="
-          echo "افتح هذا الرابط للدخول إلى الأندرويد:"
+          echo "افتح هذا الرابط للدخول إلى أندرويد 13:"
           cat link.txt
           echo "=========================================="
           sleep 21000
