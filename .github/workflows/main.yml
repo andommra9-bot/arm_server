@@ -15,11 +15,17 @@ jobs:
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320
 
-      - name: Start Web Screen & Public Link
+      - name: Start Web Screen & Get Link
         run: |
-          sleep 25
+          sleep 20
           sudo apt-get update && sudo apt-get install -y adb
           adb connect localhost:5555
           docker run -d --net=host --platform linux/amd64 scavin/ws-scrcpy
-          docker run --net=host cloudflare/cloudflared:latest tunnel --url http://localhost:8000 &
+          sudo snap install cloudflared
+          cloudflared tunnel --url http://localhost:8000 > tunnel.log 2>&1 &
+          sleep 10
+          echo "=========================================="
+          echo "رابط شاشة الأندرويد الخاص بك هو:"
+          grep -o 'https://[-a-zA-Z0-9.]*\.trycloudflare\.com' tunnel.log | head -n 1
+          echo "=========================================="
           sleep 21000
