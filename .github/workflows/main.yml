@@ -9,15 +9,17 @@ jobs:
       - name: Start Android 14 ARM64 (Rooted)
         run: |
           docker run -itd --rm --privileged \
-            -p 5555:5555 \
+            --net=host \
             redroid/redroid:14.0.0-latest \
             androidboot.redroid_width=720 \
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320
 
       - name: Build Native ARM64 Web Screen & Link
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          sleep 35
+          sleep 30
           sudo apt-get update && sudo apt-get install -y adb nodejs npm
           adb connect localhost:5555
           gh repo clone NetrisTV/ws-scrcpy
