@@ -1,4 +1,4 @@
-name: Android 14 ARM Rooted
+name: Android ARM Rooted
 on:
   workflow_dispatch:
 
@@ -6,14 +6,17 @@ jobs:
   android-emulator:
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: Start Android 14 ARM64 (Rooted)
+      - name: Enable Kernel Modules & Start Android ARM64
         run: |
-          docker run -itd --rm --privileged \
+          sudo modprobe binder_linux devices="binder,hwbinder,vndbinder" || true
+          docker run -itd --name android --privileged \
             --net=host \
-            redroid/redroid:14.0.0-latest \
+            redroid/redroid:12.0.0-latest \
             androidboot.redroid_width=720 \
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320
+          sleep 20
+          docker ps -a
 
       - name: Build Native ARM64 Web Screen & Link
         env:
@@ -25,6 +28,7 @@ jobs:
           npm install
           npm run dist
           adb connect 127.0.0.1:5555
+          adb devices
           node dist/index.js > server.log 2>&1 &
           sleep 15
           npx -y localtunnel --port 8000 --local-host 127.0.0.1 > link.txt 2>&1 &
