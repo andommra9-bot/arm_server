@@ -1,16 +1,30 @@
-name: ARM Cloud Server
+name: Android ARM Cloud
 on:
   workflow_dispatch:
 
 jobs:
-  start-server:
+  android-emulator:
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: Check Server Specs
+      - name: Start Redroid (Android 12 ARM64)
         run: |
-          echo "المعمارية هي:"
-          uname -m
-          echo "معلومات المعالج والرام:"
-          lscpu | head -n 15
-          free -h
-          
+          docker run -itd --rm --privileged \
+            -p 5555:5555 \
+            redroid/redroid:12.0.0-latest \
+            androidboot.redroid_width=720 \
+            androidboot.redroid_height=1280 \
+            androidboot.redroid_dpi=320
+
+      - name: Setup Web Screen (ws-scrcpy) & ADB
+        run: |
+          sudo apt-get update && sudo apt-get install -y adb
+          sleep 15
+          adb connect localhost:5555
+          docker run -d --net=host scavin/ws-scrcpy
+
+      - name: Create Public Web Link (Cloudflare)
+        run: |
+          curl -L https://github.com -o cloudflared
+          chmod +x cloudflared
+          ./cloudflared tunnel --url http://localhost:8000 &
+          sleep 21000
