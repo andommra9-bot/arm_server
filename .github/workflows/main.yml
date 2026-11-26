@@ -1,0 +1,16 @@
+name: ARM Cloud Server
+on:
+  workflow_dispatch:
+
+jobs:
+  start-server:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Check Server Specs
+        run: |
+          echo "المعمارية هي:"
+          uname -m
+          echo "معلومات المعالج والرام:"
+          lscpu | head -n 15
+          free -h
+          
