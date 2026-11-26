@@ -15,14 +15,11 @@ jobs:
             androidboot.redroid_height=1280 \
             androidboot.redroid_dpi=320
 
-      - name: Start Web Screen & Tunnel
+      - name: Start Web Screen & Public Link
         run: |
-          sleep 30
-          sudo apt-get update && sudo apt-get install -y adb curl
+          sleep 25
+          sudo apt-get update && sudo apt-get install -y adb
           adb connect localhost:5555
           docker run -d --net=host --platform linux/amd64 scavin/ws-scrcpy
-          curl -fsSL https://cloudflare.com | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
-          echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://cloudflare.com any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
-          sudo apt-get update && sudo apt-get install -y cloudflared
-          cloudflared tunnel --url http://localhost:8000 &
+          docker run --net=host cloudflare/cloudflared:latest tunnel --url http://localhost:8000 &
           sleep 21000
